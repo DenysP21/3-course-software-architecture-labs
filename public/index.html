@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taskly - Kanban Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="auth-screen" class="screen">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Taskly</h1>
+        <p>Manage your tasks efficiently</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="active" id="tab-login">Sign In</button>
+        <button id="tab-register">Register</button>
+      </div>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="you@example.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Min 6 characters" minlength="6" required>
+        </div>
+
+        <p id="auth-error" class="error-msg hidden"></p>
+        
+        <button type="submit" class="btn-primary" id="auth-submit">Continue</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="board-screen" class="screen hidden">
+    
+    <header class="board-header">
+      <div class="logo">
+        <h2>Taskly</h2>
+      </div>
+      <button id="logout-btn" class="btn-outline">Log Out</button>
+    </header>
+
+    <section class="task-creator">
+      <form id="task-form" class="create-form">
+        <div class="input-group">
+          <input type="text" id="task-title" placeholder="What needs to be done?" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="task-desc" placeholder="Add description (optional)">
+        </div>
+        <div class="input-group">
+          <input type="date" id="task-date">
+        </div>
+        <button type="submit" class="btn-primary">+ Add Task</button>
+      </form>
+    </section>
+
+    <main class="kanban-board">
+      
+      <div class="column" data-status="PENDING">
+        <div class="column-header pending">
+          <h3>Pending</h3>
+          <span id="count-pending" class="task-count">0</span>
+        </div>
+        <div id="col-pending" class="task-list">
+          </div>
+      </div>
+
+      <div class="column" data-status="IN_PROGRESS">
+        <div class="column-header progress">
+          <h3>In Progress</h3>
+          <span id="count-progress" class="task-count">0</span>
+        </div>
+        <div id="col-in-progress" class="task-list">
+          </div>
+      </div>
+
+      <div class="column" data-status="COMPLETED">
+        <div class="column-header completed">
+          <h3>Completed</h3>
+          <span id="count-completed" class="task-count">0</span>
+        </div>
+        <div id="col-completed" class="task-list">
+          </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
