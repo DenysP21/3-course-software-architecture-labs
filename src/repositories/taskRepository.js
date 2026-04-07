@@ -22,7 +22,7 @@ const taskRepository = {
 
   async findById(taskId) {
     return await prisma.task.findUnique({
-      where: { id: taskId },
+      where: { id: Number(taskId) },
     });
   },
 
@@ -32,14 +32,14 @@ const taskRepository = {
     }
 
     return await prisma.task.update({
-      where: { id: taskId },
+      where: { id: Number(taskId) },
       data: updateData,
     });
   },
 
   async delete(taskId) {
     return await prisma.task.delete({
-      where: { id: taskId },
+      where: { id: Number(taskId) },
     });
   },
 };
