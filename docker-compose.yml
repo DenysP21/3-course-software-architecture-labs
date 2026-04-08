@@ -13,6 +13,37 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - task_network
+
+  backend:
+    build:
+      context: .
+    container_name: task_manager_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://admin:password123@db:5432/task_manager?schema=public
+      JWT_SECRET: super_secret_jwt_key_123
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - task_network
+
+  frontend:
+    build:
+      context: ./public
+    container_name: task_manager_frontend
+    ports:
+      - "80:80"
+    networks:
+      - task_network
 
 volumes:
   pgdata:
+
+networks:
+  task_network:
+    driver: bridge
