@@ -1,8 +1,11 @@
-const userRepository = require("../repositories/userRepository");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const userService = {
+class UserService {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+  }
+
   async register(email, password) {
     if (!email || !password) {
       throw new Error("Email and password are required");
@@ -11,22 +14,21 @@ const userService = {
       throw new Error("Password must be at least 6 characters");
     }
 
-    const existing = await userRepository.findByEmail(email);
+    const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new Error("User already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-
-    return await userRepository.create({ email, passwordHash });
-  },
+    return await this.userRepository.create({ email, passwordHash });
+  }
 
   async login(email, password) {
     if (!email || !password) {
       throw new Error("Email and password are required");
     }
 
-    const user = await userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
     }
@@ -38,15 +40,15 @@ const userService = {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET || "fallback_secret",
     );
 
-    return { token, user: { id: user.id, email: user.email } };
-  },
+    return { token, user };
+  }
 
   async getUserById(id) {
-    return await userRepository.findById(id);
-  },
-};
+    return await this.userRepository.findById(id);
+  }
+}
 
-module.exports = userService;
+module.exports = UserService;
