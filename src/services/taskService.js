@@ -1,6 +1,8 @@
-const taskRepository = require("../repositories/taskRepository");
+class TaskService {
+  constructor(taskRepository) {
+    this.taskRepository = taskRepository;
+  }
 
-const taskService = {
   async createTask(title, description, dueDate, userId) {
     if (!title) {
       throw new Error("Title is required");
@@ -13,24 +15,24 @@ const taskService = {
       }
     }
 
-    return await taskRepository.create({
+    return await this.taskRepository.create({
       title,
       description,
       dueDate,
       userId,
     });
-  },
+  }
 
   async getTasksByUserId(userId) {
-    return await taskRepository.findAllByUserId(userId);
-  },
+    return await this.taskRepository.findAllByUserId(userId);
+  }
 
   async getTaskById(taskId) {
-    return await taskRepository.findById(taskId);
-  },
+    return await this.taskRepository.findById(taskId);
+  }
 
   async updateTask(taskId, userId, updateData) {
-    const task = await taskRepository.findById(taskId);
+    const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
       throw new Error("Task not found or access denied");
@@ -43,18 +45,18 @@ const taskService = {
       }
     }
 
-    return await taskRepository.update(taskId, updateData);
-  },
+    return await this.taskRepository.update(taskId, updateData);
+  }
 
   async deleteTask(taskId, userId) {
-    const task = await taskRepository.findById(taskId);
+    const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
       throw new Error("Task not found or access denied");
     }
 
-    return await taskRepository.delete(taskId);
-  },
-};
+    return await this.taskRepository.delete(taskId);
+  }
+}
 
-module.exports = taskService;
+module.exports = TaskService;
