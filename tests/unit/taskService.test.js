@@ -1,43 +1,84 @@
-const userService = require("../../src/services/userService");
-const userRepository = require("../../src/repositories/userRepository");
+const TaskService = require("../../src/services/taskService");
 
-jest.mock("../../src/repositories/userRepository");
+describe("Task Service Unit Tests", () => {
+  let taskService;
+  let taskRepository;
 
-describe("User Service Unit Tests", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    taskRepository = {
+      create: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+    taskService = new TaskService(taskRepository);
   });
 
-  test("Should throw error if password is less than 6 characters", async () => {
-    await expect(userService.register("test@test.com", "12345"))
-      .rejects.toThrow("Password must be at least 6 characters");
+  test("Should throw error if title is missing on create", async () => {
+    await expect(taskService.createTask(null, "Description", null, 1))
+      .rejects.toThrow("Title is required");
   });
 
-  test("Should throw error if user already exists", async () => {
-    userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com" });
-
-    await expect(userService.register("test@test.com", "password123"))
-      .rejects.toThrow("User already exists");
+  test("Should throw error if due date is in the past on create", async () => {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+    await expect(taskService.createTask("Title", "Desc", pastDate, 1))
+      .rejects.toThrow("Due date cannot be in the past");
   });
 
-  test("Should throw error if password is incorrect", async () => {
-    userRepository.findByEmail.mockResolvedValue({
-      id: 1,
-      email: "test@test.com",
-      passwordHash: "hashedpassword"
-    });
-
-    await expect(userService.login("test@test.com", "wrongpassword"))
-      .rejects.toThrow("Invalid credentials");
+  test("Should create task successfully", async () => {
+    const mockTask = { id: 1, title: "Test Task" };
+    taskRepository.create.mockResolvedValue(mockTask);
+    
+    const result = await taskService.createTask("Test Task", "Desc", null, 1);
+    expect(result).toEqual(mockTask);
+    expect(taskRepository.create).toHaveBeenCalledTimes(1);
   });
 
-  test("Should register user with valid data", async () => {
-    userRepository.findByEmail.mockResolvedValue(null);
-    userRepository.create.mockResolvedValue({ id: 1, email: "new@test.com" });
+  test("Should return tasks by user id", async () => {
+    taskRepository.findAllByUserId.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    const result = await taskService.getTasksByUserId(1);
+    expect(result.length).toBe(2);
+  });
 
-    const result = await userService.register("new@test.com", "securePass123");
+  test("Should throw error on update if task not found", async () => {
+    taskRepository.findById.mockResolvedValue(null);
+    await expect(taskService.updateTask(1, 1, {}))
+      .rejects.toThrow("Task not found or access denied");
+  });
 
-    expect(result.email).toBe("new@test.com");
-    expect(userRepository.create).toHaveBeenCalledTimes(1);
+  test("Should throw error on update if access denied", async () => {
+    taskRepository.findById.mockResolvedValue({ userId: 2 });
+    await expect(taskService.updateTask(1, 1, {}))
+      .rejects.toThrow("Task not found or access denied");
+  });
+
+  test("Should throw error on update if past due date", async () => {
+    taskRepository.findById.mockResolvedValue({ userId: 1 });
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+    await expect(taskService.updateTask(1, 1, { dueDate: pastDate }))
+      .rejects.toThrow("Due date cannot be in the past");
+  });
+
+  test("Should update task successfully", async () => {
+    taskRepository.findById.mockResolvedValue({ userId: 1 });
+    taskRepository.update.mockResolvedValue({ id: 1, title: "Updated" });
+    const result = await taskService.updateTask(1, 1, { title: "Updated" });
+    expect(result.title).toBe("Updated");
+  });
+
+  test("Should throw error on delete if access denied", async () => {
+    taskRepository.findById.mockResolvedValue({ userId: 2 });
+    await expect(taskService.deleteTask(1, 1))
+      .rejects.toThrow("Task not found or access denied");
+  });
+
+  test("Should delete task successfully", async () => {
+    taskRepository.findById.mockResolvedValue({ userId: 1 });
+    taskRepository.delete.mockResolvedValue(true);
+    await taskService.deleteTask(1, 1);
+    expect(taskRepository.delete).toHaveBeenCalledWith(1);
   });
 });

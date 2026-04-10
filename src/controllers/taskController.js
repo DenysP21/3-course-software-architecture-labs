@@ -1,4 +1,3 @@
- javascript
 const { toTaskDTO } = require("../dto/task.dto");
 
 class TaskController {
