@@ -1,8 +1,11 @@
 const { toUserDTO } = require("../dto/user.dto");
+const { registerUser } = require("../commands/user/register-user.handler");
+const { loginUser } = require("../commands/user/login-user.handler");
+const { getProfile } = require("../queries/user/get-profile.handler");
 
 class UserController {
-  constructor(userService) {
-    this.userService = userService;
+  constructor(userRepository) {
+    this.userRepository = userRepository;
 
     this.register = this.register.bind(this);
     this.login = this.login.bind(this);
@@ -12,7 +15,7 @@ class UserController {
   async register(req, res) {
     try {
       const { email, password } = req.body;
-      const user = await this.userService.register(email, password);
+      const user = await registerUser({ email, password }, this.userRepository);
       res.status(201).json(toUserDTO(user));
     } catch (error) {
       if (error.message.includes("already exists")) {
@@ -25,7 +28,7 @@ class UserController {
   async login(req, res) {
     try {
       const { email, password } = req.body;
-      const result = await this.userService.login(email, password);
+      const result = await loginUser({ email, password }, this.userRepository);
       res.status(200).json({
         token: result.token,
         user: toUserDTO(result.user),
@@ -37,7 +40,7 @@ class UserController {
 
   async getProfile(req, res) {
     try {
-      const user = await this.userService.getUserById(req.user.id);
+      const user = await getProfile(req.user.id, this.userRepository);
       res.json(toUserDTO(user));
     } catch (error) {
       res.status(400).json({ error: error.message });
