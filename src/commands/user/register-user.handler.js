@@ -1,18 +1,16 @@
 const bcrypt = require("bcrypt");
+const prisma = require("../../lib/prisma");
+const { toUserDTO } = require("../../dto/user.dto");
 
 class RegisterUserCommand {
-  constructor({ email, password }) {
+  constructor(email, password) {
     this.email = email;
     this.password = password;
   }
 }
 
 class RegisterUserHandler {
-  constructor(userRepository) {
-    this.userRepository = userRepository;
-  }
-
-  async execute(command) {
+  async handle(command) {
     if (!command.email || !command.password) {
       throw new Error("Email and password are required");
     }
@@ -21,13 +19,23 @@ class RegisterUserHandler {
       throw new Error("Password must be at least 6 characters");
     }
 
-    const existing = await this.userRepository.findByEmail(command.email);
+    const existing = await prisma.user.findUnique({
+      where: { email: command.email }
+    });
+    
     if (existing) {
       throw new Error("User already exists");
     }
 
     const passwordHash = await bcrypt.hash(command.password, 10);
-    return await this.userRepository.create({ email: command.email, passwordHash });
+    const user = await prisma.user.create({
+      data: { 
+        email: command.email, 
+        passwordHash 
+      }
+    });
+
+    return toUserDTO(user);
   }
 }
 

@@ -1,25 +1,29 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const prisma = require("../../lib/prisma");
+const { toUserDTO } = require("../../dto/user.dto");
 
 class LoginUserCommand {
-  constructor({ email, password }) {
+  constructor(email, password) {
     this.email = email;
     this.password = password;
   }
 }
 
 class LoginUserHandler {
-  constructor(userRepository, jwtSecret = process.env.JWT_SECRET || "fallback_secret") {
-    this.userRepository = userRepository;
+  constructor(jwtSecret = process.env.JWT_SECRET || "fallback_secret") {
     this.jwtSecret = jwtSecret;
   }
 
-  async execute(command) {
+  async handle(command) {
     if (!command.email || !command.password) {
       throw new Error("Email and password are required");
     }
 
-    const user = await this.userRepository.findByEmail(command.email);
+    const user = await prisma.user.findUnique({
+      where: { email: command.email }
+    });
+    
     if (!user) {
       throw new Error("Invalid credentials");
     }
@@ -34,7 +38,10 @@ class LoginUserHandler {
       this.jwtSecret,
     );
 
-    return { token, user };
+    return { 
+      token, 
+      user: toUserDTO(user) 
+    };
   }
 }
 
