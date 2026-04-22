@@ -1,8 +1,22 @@
-const { toTaskDTO } = require("../dto/task.dto");
+const { CreateTaskCommand } = require("../commands/task/create-task.handler");
+const { UpdateTaskCommand } = require("../commands/task/update-task.handler");
+const { DeleteTaskCommand } = require("../commands/task/delete-task.handler");
+const { GetTasksQuery } = require("../queries/task/get-tasks.handler");
+const { GetTaskByIdQuery } = require("../queries/task/get-task-by-id.handler");
 
 class TaskController {
-  constructor(taskService) {
-    this.taskService = taskService;
+  constructor(
+    createTaskHandler,
+    updateTaskHandler,
+    deleteTaskHandler,
+    getTasksHandler,
+    getTaskByIdHandler
+  ) {
+    this.createTaskHandler = createTaskHandler;
+    this.updateTaskHandler = updateTaskHandler;
+    this.deleteTaskHandler = deleteTaskHandler;
+    this.getTasksHandler = getTasksHandler;
+    this.getTaskByIdHandler = getTaskByIdHandler;
 
     this.createTask = this.createTask.bind(this);
     this.getTasks = this.getTasks.bind(this);
@@ -13,14 +27,14 @@ class TaskController {
 
   async createTask(req, res) {
     try {
-      const { title, description, dueDate } = req.body;
-      const task = await this.taskService.createTask(
-        title,
-        description,
-        dueDate,
-        req.user.id,
-      );
-      res.status(201).json(toTaskDTO(task));
+      const command = new CreateTaskCommand({
+        title: req.body.title,
+        description: req.body.description,
+        dueDate: req.body.dueDate,
+        userId: req.user.id,
+      });
+      const result = await this.createTaskHandler.execute(command);
+      res.status(201).json(result);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -28,8 +42,9 @@ class TaskController {
 
   async getTasks(req, res) {
     try {
-      const tasks = await this.taskService.getTasksByUserId(req.user.id);
-      res.json(tasks.map(toTaskDTO));
+      const query = new GetTasksQuery(req.user.id);
+      const tasks = await this.getTasksHandler.execute(query);
+      res.json(tasks);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -37,26 +52,28 @@ class TaskController {
 
   async getTask(req, res) {
     try {
-      const task = await this.taskService.getTaskById(req.params.id);
-      if (!task || task.userId !== req.user.id) {
-        return res.status(404).json({ error: "Task not found" });
-      }
-      res.json(toTaskDTO(task));
+      const query = new GetTaskByIdQuery({
+        taskId: req.params.id,
+        userId: req.user.id,
+      });
+      const task = await this.getTaskByIdHandler.execute(query);
+      res.json(task);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(404).json({ error: error.message });
     }
   }
 
   async updateTask(req, res) {
     try {
-      const task = await this.taskService.updateTask(
-        req.params.id,
-        req.user.id,
-        req.body,
-      );
-      res.json(toTaskDTO(task));
+      const command = new UpdateTaskCommand({
+        taskId: req.params.id,
+        userId: req.user.id,
+        updateData: req.body,
+      });
+      const result = await this.updateTaskHandler.execute(command);
+      res.json(result);
     } catch (error) {
-      if (error.message.includes("access denied")) {
+      if (error.message.includes("access denied") || error.message.includes("not found")) {
         return res.status(404).json({ error: error.message });
       }
       res.status(400).json({ error: error.message });
@@ -65,10 +82,14 @@ class TaskController {
 
   async deleteTask(req, res) {
     try {
-      await this.taskService.deleteTask(req.params.id, req.user.id);
+      const command = new DeleteTaskCommand({
+        taskId: req.params.id,
+        userId: req.user.id,
+      });
+      await this.deleteTaskHandler.execute(command);
       res.status(204).send();
     } catch (error) {
-      if (error.message.includes("access denied")) {
+      if (error.message.includes("access denied") || error.message.includes("not found")) {
         return res.status(404).json({ error: error.message });
       }
       res.status(400).json({ error: error.message });
