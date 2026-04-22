@@ -1,8 +1,13 @@
+const { RegisterUserCommand } = require("../commands/user/register-user.handler");
+const { LoginUserCommand } = require("../commands/user/login-user.handler");
+const { GetProfileQuery } = require("../queries/user/get-profile.handler");
 const { toUserDTO } = require("../dto/user.dto");
 
 class UserController {
-  constructor(userService) {
-    this.userService = userService;
+  constructor(registerHandler, loginHandler, getProfileHandler) {
+    this.registerHandler = registerHandler;
+    this.loginHandler = loginHandler;
+    this.getProfileHandler = getProfileHandler;
 
     this.register = this.register.bind(this);
     this.login = this.login.bind(this);
@@ -11,9 +16,9 @@ class UserController {
 
   async register(req, res) {
     try {
-      const { email, password } = req.body;
-      const user = await this.userService.register(email, password);
-      res.status(201).json(toUserDTO(user));
+      const command = new RegisterUserCommand(req.body.email, req.body.password);
+      const user = await this.registerHandler.handle(command);
+      res.status(201).json(user);
     } catch (error) {
       if (error.message.includes("already exists")) {
         return res.status(409).json({ error: error.message });
@@ -24,11 +29,11 @@ class UserController {
 
   async login(req, res) {
     try {
-      const { email, password } = req.body;
-      const result = await this.userService.login(email, password);
+      const command = new LoginUserCommand(req.body.email, req.body.password);
+      const result = await this.loginHandler.handle(command);
       res.status(200).json({
         token: result.token,
-        user: toUserDTO(result.user),
+        user: result.user,
       });
     } catch (error) {
       res.status(401).json({ error: error.message });
@@ -37,8 +42,9 @@ class UserController {
 
   async getProfile(req, res) {
     try {
-      const user = await this.userService.getUserById(req.user.id);
-      res.json(toUserDTO(user));
+      const query = new GetProfileQuery(req.user.id);
+      const userDTO = await this.getProfileHandler.handle(query);
+      res.json(userDTO);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
