@@ -1,9 +1,9 @@
 const bcrypt = require("bcrypt");
-const { registerUser } = require("../../src/commands/user/register-user.handler");
-const { loginUser } = require("../../src/commands/user/login-user.handler");
+const { RegisterUserCommand, RegisterUserHandler } = require("../../src/commands/user/register-user.handler");
+const { LoginUserCommand, LoginUserHandler } = require("../../src/commands/user/login-user.handler");
 const { getProfile } = require("../../src/queries/user/get-profile.handler");
 
-describe("User command/query handlers", () => {
+describe("User Commands and Handlers", () => {
   let userRepository;
 
   beforeEach(() => {
@@ -14,68 +14,154 @@ describe("User command/query handlers", () => {
     };
   });
 
-  test("registerUser throws if email or password is missing", async () => {
-    await expect(registerUser({ email: null, password: "123456" }, userRepository))
-      .rejects.toThrow("Email and password are required");
+  describe("RegisterUserCommand", () => {
+    test("creates a command with email and password", () => {
+      const command = new RegisterUserCommand({ email: "test@test.com", password: "password123" });
+      
+      expect(command.email).toBe("test@test.com");
+      expect(command.password).toBe("password123");
+    });
   });
 
-  test("registerUser throws if password is too short", async () => {
-    await expect(registerUser({ email: "test@test.com", password: "12345" }, userRepository))
-      .rejects.toThrow("Password must be at least 6 characters");
+  describe("RegisterUserHandler", () => {
+    let handler;
+
+    beforeEach(() => {
+      handler = new RegisterUserHandler(userRepository);
+    });
+
+    test("throws if email is missing", async () => {
+      const command = new RegisterUserCommand({ email: null, password: "123456" });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Email and password are required");
+    });
+
+    test("throws if password is missing", async () => {
+      const command = new RegisterUserCommand({ email: "test@test.com", password: null });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Email and password are required");
+    });
+
+    test("throws if password is too short", async () => {
+      const command = new RegisterUserCommand({ email: "test@test.com", password: "12345" });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Password must be at least 6 characters");
+    });
+
+    test("throws if user already exists", async () => {
+      userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com" });
+      const command = new RegisterUserCommand({ email: "test@test.com", password: "password123" });
+
+      await expect(handler.execute(command))
+        .rejects.toThrow("User already exists");
+    });
+
+    test("creates a new user successfully", async () => {
+      userRepository.findByEmail.mockResolvedValue(null);
+      userRepository.create.mockResolvedValue({ id: 1, email: "new@test.com", passwordHash: "hashed" });
+
+      const command = new RegisterUserCommand({ email: "new@test.com", password: "securePass123" });
+      const result = await handler.execute(command);
+
+      expect(result).toEqual({ id: 1, email: "new@test.com", passwordHash: "hashed" });
+      expect(userRepository.create).toHaveBeenCalledTimes(1);
+      expect(userRepository.create).toHaveBeenCalledWith(expect.objectContaining({ email: "new@test.com" }));
+    });
   });
 
-  test("registerUser throws if user already exists", async () => {
-    userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com" });
-
-    await expect(registerUser({ email: "test@test.com", password: "password123" }, userRepository))
-      .rejects.toThrow("User already exists");
+  describe("LoginUserCommand", () => {
+    test("creates a command with email and password", () => {
+      const command = new LoginUserCommand({ email: "test@test.com", password: "password123" });
+      
+      expect(command.email).toBe("test@test.com");
+      expect(command.password).toBe("password123");
+    });
   });
 
-  test("registerUser creates a new user", async () => {
-    userRepository.findByEmail.mockResolvedValue(null);
-    userRepository.create.mockResolvedValue({ id: 1, email: "new@test.com" });
+  describe("LoginUserHandler", () => {
+    let handler;
 
-    const result = await registerUser({ email: "new@test.com", password: "securePass123" }, userRepository);
+    beforeEach(() => {
+      handler = new LoginUserHandler(userRepository, "test_secret");
+    });
 
-    expect(result).toEqual({ id: 1, email: "new@test.com" });
-    expect(userRepository.create).toHaveBeenCalledTimes(1);
-    expect(userRepository.create).toHaveBeenCalledWith(expect.objectContaining({ email: "new@test.com" }));
+    test("throws if email is missing", async () => {
+      const command = new LoginUserCommand({ email: null, password: "pass123" });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Email and password are required");
+    });
+
+    test("throws if password is missing", async () => {
+      const command = new LoginUserCommand({ email: "test@test.com", password: null });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Email and password are required");
+    });
+
+    test("throws if user is not found", async () => {
+      userRepository.findByEmail.mockResolvedValue(null);
+      const command = new LoginUserCommand({ email: "notfound@test.com", password: "pass123" });
+
+      await expect(handler.execute(command))
+        .rejects.toThrow("Invalid credentials");
+    });
+
+    test("throws if password is invalid", async () => {
+      const hashedPassword = await bcrypt.hash("correctPassword", 10);
+      userRepository.findByEmail.mockResolvedValue({ 
+        id: 1, 
+        email: "test@test.com", 
+        passwordHash: hashedPassword 
+      });
+
+      const command = new LoginUserCommand({ email: "test@test.com", password: "wrongpassword" });
+      
+      await expect(handler.execute(command))
+        .rejects.toThrow("Invalid credentials");
+    });
+
+    test("returns token and user when credentials are valid", async () => {
+      const hashedPassword = await bcrypt.hash("correctPassword", 10);
+      userRepository.findByEmail.mockResolvedValue({ 
+        id: 1, 
+        email: "test@test.com", 
+        passwordHash: hashedPassword 
+      });
+
+      const command = new LoginUserCommand({ email: "test@test.com", password: "correctPassword" });
+      const result = await handler.execute(command);
+
+      expect(result.user).toEqual(expect.objectContaining({ id: 1, email: "test@test.com" }));
+      expect(result.token).toBeDefined();
+    });
+
+    test("uses custom JWT secret", async () => {
+      const customSecret = "custom_secret_key";
+      const customHandler = new LoginUserHandler(userRepository, customSecret);
+      const hashedPassword = await bcrypt.hash("correctPassword", 10);
+      userRepository.findByEmail.mockResolvedValue({ 
+        id: 1, 
+        email: "test@test.com", 
+        passwordHash: hashedPassword 
+      });
+
+      const command = new LoginUserCommand({ email: "test@test.com", password: "correctPassword" });
+      const result = await customHandler.execute(command);
+
+      expect(result.token).toBeDefined();
+    });
   });
 
-  test("loginUser throws if email or password is missing", async () => {
-    await expect(loginUser({ email: "test@test.com", password: null }, userRepository))
-      .rejects.toThrow("Email and password are required");
-  });
+  describe("getProfile query", () => {
+    test("returns a user by id", async () => {
+      userRepository.findById.mockResolvedValue({ id: 1, email: "user@test.com" });
 
-  test("loginUser throws if user is not found", async () => {
-    userRepository.findByEmail.mockResolvedValue(null);
-
-    await expect(loginUser({ email: "notfound@test.com", password: "pass123" }, userRepository))
-      .rejects.toThrow("Invalid credentials");
-  });
-
-  test("loginUser throws if password is invalid", async () => {
-    const hashedPassword = await bcrypt.hash("correctPassword", 10);
-    userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com", passwordHash: hashedPassword });
-
-    await expect(loginUser({ email: "test@test.com", password: "wrongpassword" }, userRepository))
-      .rejects.toThrow("Invalid credentials");
-  });
-
-  test("loginUser returns token and user when credentials are valid", async () => {
-    const hashedPassword = await bcrypt.hash("correctPassword", 10);
-    userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com", passwordHash: hashedPassword });
-
-    const result = await loginUser({ email: "test@test.com", password: "correctPassword" }, userRepository, "test_secret");
-
-    expect(result.user).toEqual(expect.objectContaining({ id: 1, email: "test@test.com" }));
-    expect(result.token).toBeDefined();
-  });
-
-  test("getProfile returns a user by id", async () => {
-    userRepository.findById.mockResolvedValue({ id: 1, email: "user@test.com" });
-
-    const user = await getProfile(1, userRepository);
-    expect(user).toEqual({ id: 1, email: "user@test.com" });
+      const user = await getProfile(1, userRepository);
+      expect(user).toEqual({ id: 1, email: "user@test.com" });
+    });
   });
 });
