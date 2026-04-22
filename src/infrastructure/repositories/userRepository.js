@@ -1,4 +1,4 @@
-const prisma = require("../lib/prisma");
+const prisma = require("../database/prisma");
 
 const userRepository = {
   async create(userData) {
