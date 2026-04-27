@@ -52,5 +52,6 @@ describe("TaskFactory Unit Tests (Pure Domain)", () => {
     expect(task.userId).toBe(42);
 
     expect(task.status).toBe("PENDING");
+    expect(task.updatedAt).toBeInstanceOf(Date);
   });
 });
