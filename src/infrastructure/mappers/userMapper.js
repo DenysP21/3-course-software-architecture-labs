@@ -1,4 +1,4 @@
-const User = require('../../domain/models/User');
+const User = require("../../domain/models/User");
 
 class UserMapper {
   static toDomainModel(rawUser) {
@@ -10,6 +10,13 @@ class UserMapper {
       passwordHash: rawUser.passwordHash,
       createdAt: rawUser.createdAt,
     });
+  }
+
+  static toPersistence(user) {
+    return {
+      email: user.email,
+      passwordHash: user.passwordHash,
+    };
   }
 }
 
