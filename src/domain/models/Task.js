@@ -1,7 +1,16 @@
 const { DomainError, ValidationError } = require("../errors/DomainError");
 
 class Task {
-  constructor({ id, title, description, status, dueDate, userId, createdAt }) {
+  constructor({
+    id,
+    title,
+    description,
+    status,
+    dueDate,
+    userId,
+    createdAt,
+    updatedAt,
+  }) {
     this.id = id;
     this.title = title;
     this.description = description || "";
@@ -9,6 +18,7 @@ class Task {
     this.dueDate = dueDate ? new Date(dueDate) : null;
     this.userId = userId;
     this.createdAt = createdAt || new Date();
+    this.updatedAt = updatedAt || new Date();
   }
 
   markAsCompleted() {
@@ -16,6 +26,7 @@ class Task {
       throw new DomainError("Task is already completed");
     }
     this.status = "COMPLETED";
+    this.updatedAt = new Date();
   }
 
   updateTitle(newTitle) {
@@ -23,6 +34,7 @@ class Task {
       throw new ValidationError("Title cannot be empty");
     }
     this.title = newTitle;
+    this.updatedAt = new Date();
   }
 }
 
