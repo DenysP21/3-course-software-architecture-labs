@@ -1,8 +1,9 @@
-const prisma = require("../lib/prisma");
+const prisma = require("../database/prisma");
+const TaskMapper = require("../mappers/TaskMapper");
 
 const taskRepository = {
   async create(taskData) {
-    return await prisma.task.create({
+    const rawTask = await prisma.task.create({
       data: {
         title: taskData.title,
         description: taskData.description,
@@ -11,19 +12,22 @@ const taskRepository = {
         userId: taskData.userId,
       },
     });
+    return TaskMapper.toDomainModel(rawTask);
   },
 
   async findAllByUserId(userId) {
-    return await prisma.task.findMany({
+    const rawTasks = await prisma.task.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
+    return rawTasks.map(rawTask => TaskMapper.toDomainModel(rawTask));
   },
 
   async findById(taskId) {
-    return await prisma.task.findUnique({
+    const rawTask = await prisma.task.findUnique({
       where: { id: Number(taskId) },
     });
+    return TaskMapper.toDomainModel(rawTask);
   },
 
   async update(taskId, updateData) {
@@ -31,16 +35,18 @@ const taskRepository = {
       updateData.dueDate = new Date(updateData.dueDate);
     }
 
-    return await prisma.task.update({
+    const rawTask = await prisma.task.update({
       where: { id: Number(taskId) },
       data: updateData,
     });
+    return TaskMapper.toDomainModel(rawTask);
   },
 
   async delete(taskId) {
-    return await prisma.task.delete({
+    const rawTask = await prisma.task.delete({
       where: { id: Number(taskId) },
     });
+    return TaskMapper.toDomainModel(rawTask);
   },
 };
 
