@@ -1,0 +1,60 @@
+const DomainError = require("../errors/DomainError");
+const { TaskValidationError } = require("../errors/taskErrors");
+
+class Task {
+  constructor({
+    id,
+    title,
+    description,
+    status,
+    dueDate,
+    userId,
+    createdAt,
+    updatedAt,
+  }) {
+    this.id = id;
+    this.title = title;
+    this.description = description || "";
+    this.status = status || "PENDING";
+    this.dueDate = dueDate ? new Date(dueDate) : null;
+    this.userId = userId;
+    this.createdAt = createdAt || new Date();
+    this.updatedAt = updatedAt || new Date();
+  }
+
+  markAsCompleted() {
+    if (this.status === "COMPLETED") {
+      throw new DomainError("Task is already completed");
+    }
+    this.status = "COMPLETED";
+    this.updatedAt = new Date();
+  }
+
+  updateTitle(newTitle) {
+    if (!newTitle || newTitle.trim().length === 0) {
+      throw new TaskValidationError("Title cannot be empty");
+    }
+    this.title = newTitle;
+    this.updatedAt = new Date();
+  }
+
+  updateDescription(newDescription) {
+    this.description = newDescription || "";
+    this.updatedAt = new Date();
+  }
+
+  updateDueDate(newDueDate) {
+    if (newDueDate) {
+      const parsedDate = new Date(newDueDate);
+      if (parsedDate < new Date()) {
+        throw new DomainError("Due date cannot be in the past");
+      }
+      this.dueDate = parsedDate;
+    } else {
+      this.dueDate = null;
+    }
+    this.updatedAt = new Date();
+  }
+}
+
+module.exports = Task;
