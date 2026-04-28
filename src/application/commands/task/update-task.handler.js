@@ -13,17 +13,17 @@ class UpdateTaskHandler {
       throw new TaskValidationError("Task not found or access denied");
     }
 
-    if (updateData.title !== undefined) {
-      task.updateTitle(updateData.title);
-    }
+    const methods = {
+      title: 'updateTitle',
+      description: 'updateDescription',
+      dueDate: 'updateDueDate'
+    };
 
-    if (updateData.description !== undefined) {
-      task.updateDescription(updateData.description);
-    }
-
-    if (updateData.dueDate !== undefined) {
-      task.updateDueDate(updateData.dueDate);
-    }
+    Object.keys(methods).forEach(field => {
+      if (updateData[field] !== undefined) {
+        task[methods[field]](updateData[field]);
+      }
+    });
 
     if (updateData.status === "COMPLETED") {
       task.markAsCompleted();
