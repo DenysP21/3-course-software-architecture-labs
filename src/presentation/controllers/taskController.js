@@ -1,54 +1,77 @@
-const { toTaskDTO } = require("../dto/task.dto");
-
 class TaskController {
-  constructor(taskService) {
-    this.taskService = taskService;
+  constructor(
+    createHandler,
+    updateHandler,
+    deleteHandler,
+    getTasksQuery,
+    getTaskByIdQuery,
+  ) {
+    this.createHandler = createHandler;
+    this.updateHandler = updateHandler;
+    this.deleteHandler = deleteHandler;
+    this.getTasksQuery = getTasksQuery;
+    this.getTaskByIdQuery = getTaskByIdQuery;
 
     this.createTask = this.createTask.bind(this);
-    this.getTasks = this.getTasks.bind(this);
-    this.getTask = this.getTask.bind(this);
     this.updateTask = this.updateTask.bind(this);
     this.deleteTask = this.deleteTask.bind(this);
+    this.getTasks = this.getTasks.bind(this);
+    this.getTask = this.getTask.bind(this);
   }
 
   async createTask(req, res, next) {
-    const { title, description, dueDate } = req.body;
-    const task = await this.taskService.createTask(
-      title,
-      description,
-      dueDate,
-      req.user.id,
-    );
-    res.status(201).json(toTaskDTO(task));
-  }
-
-  async getTasks(req, res, next) {
-    const tasks = await this.taskService.getTasksByUserId(req.user.id);
-    res.json(tasks.map(toTaskDTO));
-  }
-
-  async getTask(req, res, next) {
-    const task = await this.taskService.getTaskById(req.params.id);
-    if (!task || task.userId !== req.user.id) {
-      const error = new Error("Task not found");
-      error.statusCode = 404;
-      throw error;
+    try {
+      const command = { ...req.body, userId: req.user.id };
+      const result = await this.createHandler.handle(command);
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
     }
-    res.json(toTaskDTO(task));
   }
 
   async updateTask(req, res, next) {
-    const task = await this.taskService.updateTask(
-      req.params.id,
-      req.user.id,
-      req.body,
-    );
-    res.json(toTaskDTO(task));
+    try {
+      const command = {
+        taskId: req.params.id,
+        userId: req.user.id,
+        updateData: req.body,
+      };
+      const result = await this.updateHandler.handle(command);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   async deleteTask(req, res, next) {
-    await this.taskService.deleteTask(req.params.id, req.user.id);
-    res.status(204).send();
+    try {
+      const command = { taskId: req.params.id, userId: req.user.id };
+      await this.deleteHandler.handle(command);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTasks(req, res, next) {
+    try {
+      const tasks = await this.getTasksQuery.handle({ userId: req.user.id });
+      res.json(tasks);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTask(req, res, next) {
+    try {
+      const task = await this.getTaskByIdQuery.handle({
+        taskId: req.params.id,
+        userId: req.user.id,
+      });
+      res.json(task);
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

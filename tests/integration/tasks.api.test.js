@@ -95,7 +95,13 @@ describe("Task API Integration Tests", () => {
       .send({ title: "Updated Task Title" });
 
     expect(updateRes.statusCode).toBe(200);
-    expect(updateRes.body.title).toBe("Updated Task Title");
+
+    const getRes = await request(app)
+      .get(`/tasks/${taskId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(getRes.statusCode).toBe(200);
+    expect(getRes.body.title).toBe("Updated Task Title");
   });
 
   test("DELETE /tasks/:id should delete task", async () => {
