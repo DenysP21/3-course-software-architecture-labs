@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../../src/app");
-const prisma = require("../../src/lib/prisma");
+const prisma = require("../../src/infrastructure/database/prisma");
 
 describe("User API Integration Tests", () => {
   beforeAll(async () => {

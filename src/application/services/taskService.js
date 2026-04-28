@@ -1,3 +1,5 @@
+const { InvalidTaskDateError, TaskValidationError } = require("../../domain/errors/taskErrors");
+
 class TaskService {
   constructor(taskRepository) {
     this.taskRepository = taskRepository;
@@ -5,13 +7,13 @@ class TaskService {
 
   async createTask(title, description, dueDate, userId) {
     if (!title) {
-      throw new Error("Title is required");
+      throw new TaskValidationError("Title is required");
     }
 
     if (dueDate) {
       const dueDateObj = new Date(dueDate);
       if (dueDateObj < new Date()) {
-        throw new Error("Due date cannot be in the past");
+        throw new InvalidTaskDateError("Due date cannot be in the past");
       }
     }
 
@@ -35,13 +37,13 @@ class TaskService {
     const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
-      throw new Error("Task not found or access denied");
+      throw new TaskValidationError("Task not found or access denied");
     }
 
     if (updateData.dueDate) {
       const dueDateObj = new Date(updateData.dueDate);
       if (dueDateObj < new Date()) {
-        throw new Error("Due date cannot be in the past");
+        throw new InvalidTaskDateError("Due date cannot be in the past");
       }
     }
 
@@ -52,7 +54,7 @@ class TaskService {
     const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
-      throw new Error("Task not found or access denied");
+      throw new TaskValidationError("Task not found or access denied");
     }
 
     return await this.taskRepository.delete(taskId);

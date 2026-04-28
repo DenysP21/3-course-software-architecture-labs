@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { UserExistsError, UserValidationError } = require("../../domain/errors/userErrors");
 
 class UserService {
   constructor(userRepository) {
@@ -8,15 +9,15 @@ class UserService {
 
   async register(email, password) {
     if (!email || !password) {
-      throw new Error("Email and password are required");
+      throw new UserValidationError("Email and password are required");
     }
     if (password.length < 6) {
-      throw new Error("Password must be at least 6 characters");
+      throw new UserValidationError("Password must be at least 6 characters");
     }
 
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      throw new Error("User already exists");
+      throw new UserExistsError("User already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -25,17 +26,17 @@ class UserService {
 
   async login(email, password) {
     if (!email || !password) {
-      throw new Error("Email and password are required");
+      throw new UserValidationError("Email and password are required");
     }
 
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new UserValidationError("Invalid credentials");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
+      throw new UserValidationError("Invalid credentials");
     }
 
     const token = jwt.sign(

@@ -1,4 +1,5 @@
-const TaskService = require("../../src/services/taskService");
+const TaskService = require("../../src/application/services/taskService");
+const { TaskValidationError, InvalidTaskDateError } = require("../../src/domain/errors/taskErrors");
 
 describe("Task Service Unit Tests", () => {
   let taskService;
@@ -15,16 +16,16 @@ describe("Task Service Unit Tests", () => {
     taskService = new TaskService(taskRepository);
   });
 
-  test("Should throw error if title is missing on create", async () => {
+  test("Should throw TaskValidationError if title is missing on create", async () => {
     await expect(taskService.createTask(null, "Description", null, 1))
-      .rejects.toThrow("Title is required");
+      .rejects.toThrow(TaskValidationError);
   });
 
-  test("Should throw error if due date is in the past on create", async () => {
+  test("Should throw InvalidTaskDateError if due date is in the past on create", async () => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 1);
     await expect(taskService.createTask("Title", "Desc", pastDate, 1))
-      .rejects.toThrow("Due date cannot be in the past");
+      .rejects.toThrow(InvalidTaskDateError);
   });
 
   test("Should create task successfully", async () => {
@@ -42,10 +43,10 @@ describe("Task Service Unit Tests", () => {
     expect(result.length).toBe(2);
   });
 
-  test("Should throw error on update if task not found", async () => {
+  test("Should throw TaskValidationError on update if task not found", async () => {
     taskRepository.findById.mockResolvedValue(null);
     await expect(taskService.updateTask(1, 1, {}))
-      .rejects.toThrow("Task not found or access denied");
+      .rejects.toThrow(TaskValidationError);
   });
 
   test("Should throw error on update if access denied", async () => {

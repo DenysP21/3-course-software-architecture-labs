@@ -1,7 +1,8 @@
-const UserService = require("../../src/services/userService");
-const userRepository = require("../../src/repositories/userRepository");
+const UserService = require("../../src/application/services/userService");
+const userRepository = require("../../src/infrastructure/repositories/userRepository");
+const { UserValidationError, UserExistsError } = require("../../src/domain/errors/userErrors");
 
-jest.mock("../../src/repositories/userRepository");
+jest.mock("../../src/infrastructure/repositories/userRepository");
 
 describe("User Service Unit Tests", () => {
   let userService;
@@ -11,19 +12,19 @@ describe("User Service Unit Tests", () => {
     userService = new UserService(userRepository);
   });
 
-  test("Should throw error if password is less than 6 characters", async () => {
+  test("Should throw UserValidationError if password is less than 6 characters", async () => {
     await expect(userService.register("test@test.com", "12345"))
-      .rejects.toThrow("Password must be at least 6 characters");
+      .rejects.toThrow(UserValidationError);
   });
 
-  test("Should throw error if user already exists", async () => {
+  test("Should throw UserExistsError if user already exists", async () => {
     userRepository.findByEmail.mockResolvedValue({ id: 1, email: "test@test.com" });
 
     await expect(userService.register("test@test.com", "password123"))
-      .rejects.toThrow("User already exists");
+      .rejects.toThrow(UserExistsError);
   });
 
-  test("Should throw error if password is incorrect", async () => {
+  test("Should throw UserValidationError if password is incorrect", async () => {
     userRepository.findByEmail.mockResolvedValue({
       id: 1,
       email: "test@test.com",
@@ -31,7 +32,7 @@ describe("User Service Unit Tests", () => {
     });
 
     await expect(userService.login("test@test.com", "wrongpassword"))
-      .rejects.toThrow("Invalid credentials");
+      .rejects.toThrow(UserValidationError);
   });
 
   test("Should register user with valid data", async () => {
@@ -44,9 +45,9 @@ describe("User Service Unit Tests", () => {
     expect(userRepository.create).toHaveBeenCalledTimes(1);
   });
 
-  test("Should throw error if email or password missing on register", async () => {
+  test("Should throw UserValidationError if email or password missing on register", async () => {
     await expect(userService.register(null, "123456"))
-      .rejects.toThrow("Email and password are required");
+      .rejects.toThrow(UserValidationError);
   });
 
   test("Should throw error if email or password missing on login", async () => {
