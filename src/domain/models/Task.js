@@ -1,4 +1,5 @@
-const { DomainError, ValidationError } = require("../errors/DomainError");
+const DomainError = require("../errors/DomainError");
+const { TaskValidationError } = require("../errors/taskErrors");
 
 class Task {
   constructor({

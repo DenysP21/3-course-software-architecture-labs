@@ -1,6 +1,6 @@
 const request = require("supertest");
 const app = require("../../src/app");
-const prisma = require("../../src/lib/prisma");
+const prisma = require("../../src/infrastructure/database/prisma");
 
 describe("Task API Integration Tests", () => {
   let token;
@@ -14,7 +14,9 @@ describe("Task API Integration Tests", () => {
     const password = "password123";
 
     await request(app).post("/users/register").send({ email, password });
-    const loginRes = await request(app).post("/users/login").send({ email, password });
+    const loginRes = await request(app)
+      .post("/users/login")
+      .send({ email, password });
 
     token = loginRes.body.token;
     userId = loginRes.body.user.id;
@@ -32,13 +34,13 @@ describe("Task API Integration Tests", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Integration Task",
-        description: "DB Check"
+        description: "DB Check",
       });
 
     expect(res.statusCode).toBe(201);
-    
+
     const taskInDb = await prisma.task.findUnique({
-      where: { id: res.body.id }
+      where: { id: res.body.id },
     });
 
     expect(taskInDb).not.toBeNull();
@@ -47,11 +49,9 @@ describe("Task API Integration Tests", () => {
   });
 
   test("POST /tasks should return 401 without token", async () => {
-    const res = await request(app)
-      .post("/tasks")
-      .send({
-        title: "Unauthorized"
-      });
+    const res = await request(app).post("/tasks").send({
+      title: "Unauthorized",
+    });
 
     expect(res.statusCode).toBe(401);
   });
@@ -115,7 +115,7 @@ describe("Task API Integration Tests", () => {
     const getRes = await request(app)
       .get(`/tasks/${taskId}`)
       .set("Authorization", `Bearer ${token}`);
-    
+
     expect(getRes.statusCode).toBe(404);
   });
 });

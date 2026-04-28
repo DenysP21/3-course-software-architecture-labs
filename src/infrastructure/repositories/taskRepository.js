@@ -1,5 +1,5 @@
 const prisma = require("../database/prisma");
-const TaskMapper = require("../mappers/TaskMapper");
+const TaskMapper = require("../mappers/taskMapper");
 
 const taskRepository = {
   async create(domainTask) {
@@ -9,9 +9,9 @@ const taskRepository = {
     return TaskMapper.toDomainModel(rawTask);
   },
 
-  async update(taskId, domainTask) {
+  async update(domainTask) {
     const rawTask = await prisma.task.update({
-      where: { id: Number(taskId) },
+      where: { id: Number(domainTask.id) },
       data: TaskMapper.toPersistence(domainTask),
     });
     return TaskMapper.toDomainModel(rawTask);
