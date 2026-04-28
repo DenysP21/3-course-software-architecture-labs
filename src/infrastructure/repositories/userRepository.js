@@ -1,5 +1,5 @@
 const prisma = require("../database/prisma");
-const UserMapper = require("../mappers/UserMapper");
+const UserMapper = require("../mappers/userMapper");
 
 const userRepository = {
   async create(domainUser) {

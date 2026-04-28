@@ -18,7 +18,7 @@ describe("User API Integration Tests", () => {
     const res = await request(app)
       .post("/users/register")
       .send({ email: "newuser@example.com", password: "password123" });
-    
+
     expect(res.statusCode).toBe(201);
     expect(res.body.email).toBe("newuser@example.com");
   });
@@ -27,7 +27,7 @@ describe("User API Integration Tests", () => {
     const res = await request(app)
       .post("/users/register")
       .send({ email: "newuser@example.com", password: "password123" });
-    
+
     expect(res.statusCode).toBe(409);
   });
 
@@ -35,7 +35,7 @@ describe("User API Integration Tests", () => {
     const res = await request(app)
       .post("/users/login")
       .send({ email: "newuser@example.com", password: "password123" });
-    
+
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("token");
     expect(res.body.user.email).toBe("newuser@example.com");
@@ -45,7 +45,7 @@ describe("User API Integration Tests", () => {
     const res = await request(app)
       .post("/users/login")
       .send({ email: "newuser@example.com", password: "wrongpassword" });
-    
+
     expect(res.statusCode).toBe(401);
   });
 
@@ -53,13 +53,13 @@ describe("User API Integration Tests", () => {
     const loginRes = await request(app)
       .post("/users/login")
       .send({ email: "newuser@example.com", password: "password123" });
-    
+
     const token = loginRes.body.token;
 
     const res = await request(app)
       .get("/users/profile")
       .set("Authorization", `Bearer ${token}`);
-    
+
     expect(res.statusCode).toBe(200);
     expect(res.body.email).toBe("newuser@example.com");
   });

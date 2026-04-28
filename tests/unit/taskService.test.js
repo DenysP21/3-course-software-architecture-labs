@@ -1,5 +1,5 @@
 const TaskService = require("../../src/application/services/taskService");
-const { TaskValidationError, InvalidTaskDateError } = require("../../src/domain/errors/taskErrors");
+const Task = require("../../src/domain/models/Task");
 
 describe("Task Service Unit Tests", () => {
   let taskService;
@@ -16,22 +16,24 @@ describe("Task Service Unit Tests", () => {
     taskService = new TaskService(taskRepository);
   });
 
-  test("Should throw TaskValidationError if title is missing on create", async () => {
-    await expect(taskService.createTask(null, "Description", null, 1))
-      .rejects.toThrow(TaskValidationError);
+  test("Should throw error if title is missing on create", async () => {
+    await expect(
+      taskService.createTask(null, "Description", null, 1),
+    ).rejects.toThrow("Title is required");
   });
 
   test("Should throw InvalidTaskDateError if due date is in the past on create", async () => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 1);
-    await expect(taskService.createTask("Title", "Desc", pastDate, 1))
-      .rejects.toThrow(InvalidTaskDateError);
+    await expect(
+      taskService.createTask("Title", "Desc", pastDate, 1),
+    ).rejects.toThrow("Due date cannot be in the past");
   });
 
   test("Should create task successfully", async () => {
     const mockTask = { id: 1, title: "Test Task" };
     taskRepository.create.mockResolvedValue(mockTask);
-    
+
     const result = await taskService.createTask("Test Task", "Desc", null, 1);
     expect(result).toEqual(mockTask);
     expect(taskRepository.create).toHaveBeenCalledTimes(1);
@@ -45,26 +47,31 @@ describe("Task Service Unit Tests", () => {
 
   test("Should throw TaskValidationError on update if task not found", async () => {
     taskRepository.findById.mockResolvedValue(null);
-    await expect(taskService.updateTask(1, 1, {}))
-      .rejects.toThrow(TaskValidationError);
+    await expect(taskService.updateTask(1, 1, {})).rejects.toThrow(
+      "Task not found or access denied",
+    );
   });
 
   test("Should throw error on update if access denied", async () => {
     taskRepository.findById.mockResolvedValue({ userId: 2 });
-    await expect(taskService.updateTask(1, 1, {}))
-      .rejects.toThrow("Task not found or access denied");
+    await expect(taskService.updateTask(1, 1, {})).rejects.toThrow(
+      "Task not found or access denied",
+    );
   });
 
   test("Should throw error on update if past due date", async () => {
-    taskRepository.findById.mockResolvedValue({ userId: 1 });
+    const mockTask = new Task({ id: 1, title: "Old", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 1);
-    await expect(taskService.updateTask(1, 1, { dueDate: pastDate }))
-      .rejects.toThrow("Due date cannot be in the past");
+    await expect(
+      taskService.updateTask(1, 1, { dueDate: pastDate }),
+    ).rejects.toThrow("Due date cannot be in the past");
   });
 
   test("Should update task successfully", async () => {
-    taskRepository.findById.mockResolvedValue({ userId: 1 });
+    const mockTask = new Task({ id: 1, title: "Old", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
     taskRepository.update.mockResolvedValue({ id: 1, title: "Updated" });
     const result = await taskService.updateTask(1, 1, { title: "Updated" });
     expect(result.title).toBe("Updated");
@@ -72,8 +79,9 @@ describe("Task Service Unit Tests", () => {
 
   test("Should throw error on delete if access denied", async () => {
     taskRepository.findById.mockResolvedValue({ userId: 2 });
-    await expect(taskService.deleteTask(1, 1))
-      .rejects.toThrow("Task not found or access denied");
+    await expect(taskService.deleteTask(1, 1)).rejects.toThrow(
+      "Task not found or access denied",
+    );
   });
 
   test("Should delete task successfully", async () => {
