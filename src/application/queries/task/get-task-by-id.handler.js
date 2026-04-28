@@ -1,4 +1,4 @@
-const prisma = require("../../infrastructure/database/prisma");
+const prisma = require("../../../infrastructure/database/prisma");
 
 class GetTaskByIdHandler {
   async handle({ taskId, userId }) {
