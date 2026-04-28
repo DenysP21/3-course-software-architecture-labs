@@ -31,7 +31,7 @@ class RegisterUserHandler {
     }
 
     const passwordHash = await bcrypt.hash(command.password, 10);
-    const user = await UserFactory.create(
+    const user = UserFactory.create(
       { email: command.email, passwordHash },
       this.userRepository,
     );
