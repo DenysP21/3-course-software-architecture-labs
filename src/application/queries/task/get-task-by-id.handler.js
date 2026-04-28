@@ -1,7 +1,7 @@
 const prisma = require("../../infrastructure/database/prisma");
 
 class GetTaskByIdHandler {
-  async execute({ taskId, userId }) {
+  async handle({ taskId, userId }) {
     const task = await prisma.task.findUnique({
       where: { id: Number(taskId) },
     });
@@ -22,4 +22,4 @@ class GetTaskByIdHandler {
   }
 }
 
-module.exports = new GetTaskByIdHandler();
+module.exports = GetTaskByIdHandler;

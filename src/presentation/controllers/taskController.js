@@ -1,50 +1,78 @@
-const createTaskHandler = require("../../commands/task/create-task.handler");
-const updateTaskHandler = require("../../commands/task/update-task.handler");
-const deleteTaskHandler = require("../../commands/task/delete-task.handler");
-const getTasksHandler = require("../../queries/task/get-tasks.handler");
-const getTaskByIdHandler = require("../../queries/task/get-task-by-id.handler");
-
 class TaskController {
+  constructor(
+    createHandler,
+    updateHandler,
+    deleteHandler,
+    getTasksQuery,
+    getTaskByIdQuery,
+  ) {
+    this.createHandler = createHandler;
+    this.updateHandler = updateHandler;
+    this.deleteHandler = deleteHandler;
+    this.getTasksQuery = getTasksQuery;
+    this.getTaskByIdQuery = getTaskByIdQuery;
+
+    this.createTask = this.createTask.bind(this);
+    this.updateTask = this.updateTask.bind(this);
+    this.deleteTask = this.deleteTask.bind(this);
+    this.getTasks = this.getTasks.bind(this);
+    this.getTask = this.getTask.bind(this);
+  }
+
   async createTask(req, res, next) {
-    const { title, description, dueDate } = req.body;
-    const result = await createTaskHandler.execute({
-      title,
-      description,
-      dueDate,
-      userId: req.user.id,
-    });
-    res.status(201).json(result);
-  }
-
-  async getTasks(req, res, next) {
-    const tasks = await getTasksHandler.execute({ userId: req.user.id });
-    res.json(tasks);
-  }
-
-  async getTask(req, res, next) {
-    const task = await getTaskByIdHandler.execute({
-      taskId: req.params.id,
-      userId: req.user.id,
-    });
-    res.json(task);
+    try {
+      const command = { ...req.body, userId: req.user.id };
+      const result = await this.createHandler.handle(command);
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   async updateTask(req, res, next) {
-    const result = await updateTaskHandler.execute({
-      taskId: req.params.id,
-      userId: req.user.id,
-      updateData: req.body,
-    });
-    res.json(result);
+    try {
+      const command = {
+        taskId: req.params.id,
+        userId: req.user.id,
+        updateData: req.body,
+      };
+      const result = await this.updateHandler.handle(command);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   async deleteTask(req, res, next) {
-    await deleteTaskHandler.execute({
-      taskId: req.params.id,
-      userId: req.user.id,
-    });
-    res.status(204).send();
+    try {
+      const command = { taskId: req.params.id, userId: req.user.id };
+      await this.deleteHandler.handle(command);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTasks(req, res, next) {
+    try {
+      const tasks = await this.getTasksQuery.handle({ userId: req.user.id });
+      res.json(tasks);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTask(req, res, next) {
+    try {
+      const task = await this.getTaskByIdQuery.handle({
+        taskId: req.params.id,
+        userId: req.user.id,
+      });
+      res.json(task);
+    } catch (error) {
+      next(error);
+    }
   }
 }
 
-module.exports = new TaskController();
+module.exports = TaskController;

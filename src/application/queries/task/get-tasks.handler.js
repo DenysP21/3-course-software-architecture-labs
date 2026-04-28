@@ -1,7 +1,7 @@
 const prisma = require("../../infrastructure/database/prisma");
 
 class GetTasksHandler {
-  async execute({ userId }) {
+  async handle({ userId }) {
     const tasks = await prisma.task.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -17,4 +17,4 @@ class GetTasksHandler {
   }
 }
 
-module.exports = new GetTasksHandler();
+module.exports = GetTasksHandler;
