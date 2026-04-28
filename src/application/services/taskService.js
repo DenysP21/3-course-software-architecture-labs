@@ -26,14 +26,19 @@ class TaskService {
       throw new TaskValidationError("Task not found or access denied");
     }
 
-    const updatedTask = TaskFactory.create({ 
-      title: updateData.title || task.title, 
-      description: updateData.description || task.description, 
-      dueDate: updateData.dueDate || task.dueDate, 
-      userId: task.userId 
-    });
+    if (updateData.title !== undefined) {
+      task.updateTitle(updateData.title);
+    }
 
-    return await this.taskRepository.update(taskId, updatedTask);
+    if (updateData.description !== undefined) {
+      task.updateDescription(updateData.description);
+    }
+
+    if (updateData.dueDate !== undefined) {
+      task.updateDueDate(updateData.dueDate);
+    }
+
+    return await this.taskRepository.update(taskId, task);
   }
 
   async deleteTask(taskId, userId) {

@@ -77,6 +77,30 @@ describe("Task Service Unit Tests", () => {
     expect(result.title).toBe("Updated");
   });
 
+  test("Should update task description successfully", async () => {
+    const mockTask = new Task({ id: 1, title: "Old", description: "Old desc", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
+    taskRepository.update.mockResolvedValue({ id: 1, description: "New desc" });
+
+    const result = await taskService.updateTask(1, 1, { description: "New desc" });
+    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    expect(mockTask.description).toBe("New desc");
+    expect(result.description).toBe("New desc");
+  });
+
+  test("Should update task due date successfully", async () => {
+    const mockTask = new Task({ id: 1, title: "Old", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 5);
+    taskRepository.update.mockResolvedValue({ id: 1, dueDate: futureDate });
+
+    const result = await taskService.updateTask(1, 1, { dueDate: futureDate });
+    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    expect(mockTask.dueDate).toEqual(futureDate);
+    expect(result.dueDate).toEqual(futureDate);
+  });
+
   test("Should throw error on delete if access denied", async () => {
     taskRepository.findById.mockResolvedValue({ userId: 2 });
     await expect(taskService.deleteTask(1, 1)).rejects.toThrow(
