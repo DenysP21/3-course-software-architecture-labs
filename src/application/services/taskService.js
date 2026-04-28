@@ -38,7 +38,7 @@ class TaskService {
       task.updateDueDate(updateData.dueDate);
     }
 
-    return await this.taskRepository.update(taskId, task);
+    return await this.taskRepository.update(task);
   }
 
   async deleteTask(taskId, userId) {

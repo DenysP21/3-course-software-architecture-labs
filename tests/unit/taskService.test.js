@@ -78,12 +78,19 @@ describe("Task Service Unit Tests", () => {
   });
 
   test("Should update task description successfully", async () => {
-    const mockTask = new Task({ id: 1, title: "Old", description: "Old desc", userId: 1 });
+    const mockTask = new Task({
+      id: 1,
+      title: "Old",
+      description: "Old desc",
+      userId: 1,
+    });
     taskRepository.findById.mockResolvedValue(mockTask);
     taskRepository.update.mockResolvedValue({ id: 1, description: "New desc" });
 
-    const result = await taskService.updateTask(1, 1, { description: "New desc" });
-    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    const result = await taskService.updateTask(1, 1, {
+      description: "New desc",
+    });
+    expect(taskRepository.update).toHaveBeenCalledWith(mockTask);
     expect(mockTask.description).toBe("New desc");
     expect(result.description).toBe("New desc");
   });
@@ -96,7 +103,7 @@ describe("Task Service Unit Tests", () => {
     taskRepository.update.mockResolvedValue({ id: 1, dueDate: futureDate });
 
     const result = await taskService.updateTask(1, 1, { dueDate: futureDate });
-    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    expect(taskRepository.update).toHaveBeenCalledWith(mockTask);
     expect(mockTask.dueDate).toEqual(futureDate);
     expect(result.dueDate).toEqual(futureDate);
   });

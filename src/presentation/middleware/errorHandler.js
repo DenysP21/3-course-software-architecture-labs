@@ -1,17 +1,18 @@
 const DomainError = require("../../domain/errors/DomainError");
-const { InvalidTaskDateError, TaskValidationError } = require("../../domain/errors/taskErrors");
-const { UserExistsError, UserValidationError } = require("../../domain/errors/userErrors");
+const { UserExistsError } = require("../../domain/errors/userErrors");
 
 const errorHandler = (error, req, res, next) => {
-  console.error(error);
+  if (process.env.NODE_ENV !== "test") {
+    console.error(error);
+  }
 
   if (error instanceof DomainError) {
     let statusCode = 400;
 
     if (error instanceof UserExistsError) {
       statusCode = 409;
-    } else if (error instanceof UserValidationError || error instanceof TaskValidationError || error instanceof InvalidTaskDateError) {
-      statusCode = 400;
+    } else if (error.message === "Invalid credentials") {
+      statusCode = 401;
     }
 
     return res.status(statusCode).json({ error: error.message });
