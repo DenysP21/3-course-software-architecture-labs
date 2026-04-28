@@ -2,12 +2,9 @@ const prisma = require("../database/prisma");
 const UserMapper = require("../mappers/UserMapper");
 
 const userRepository = {
-  async create(userData) {
+  async create(domainUser) {
     const rawUser = await prisma.user.create({
-      data: {
-        email: userData.email,
-        passwordHash: userData.passwordHash,
-      },
+      data: UserMapper.toPersistence(domainUser),
     });
     return UserMapper.toDomainModel(rawUser);
   },

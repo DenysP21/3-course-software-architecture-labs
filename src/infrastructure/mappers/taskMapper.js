@@ -15,6 +15,16 @@ class TaskMapper {
       userId: rawTask.userId,
     }); 
   }
+
+  static toPersistence(task) {
+    return {
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      dueDate: task.dueDate,
+      userId: task.userId,
+      };
+    }
 }
 
 module.exports = TaskMapper;  
