@@ -1,55 +1,50 @@
-const { toTaskDTO } = require("../dto/task.dto");
+const createTaskHandler = require("../../commands/task/create-task.handler");
+const updateTaskHandler = require("../../commands/task/update-task.handler");
+const deleteTaskHandler = require("../../commands/task/delete-task.handler");
+const getTasksHandler = require("../../queries/task/get-tasks.handler");
+const getTaskByIdHandler = require("../../queries/task/get-task-by-id.handler");
 
 class TaskController {
-  constructor(taskService) {
-    this.taskService = taskService;
-
-    this.createTask = this.createTask.bind(this);
-    this.getTasks = this.getTasks.bind(this);
-    this.getTask = this.getTask.bind(this);
-    this.updateTask = this.updateTask.bind(this);
-    this.deleteTask = this.deleteTask.bind(this);
-  }
-
   async createTask(req, res, next) {
     const { title, description, dueDate } = req.body;
-    const task = await this.taskService.createTask(
+    const result = await createTaskHandler.execute({
       title,
       description,
       dueDate,
-      req.user.id,
-    );
-    res.status(201).json(toTaskDTO(task));
+      userId: req.user.id,
+    });
+    res.status(201).json(result);
   }
 
   async getTasks(req, res, next) {
-    const tasks = await this.taskService.getTasksByUserId(req.user.id);
-    res.json(tasks.map(toTaskDTO));
+    const tasks = await getTasksHandler.execute({ userId: req.user.id });
+    res.json(tasks);
   }
 
   async getTask(req, res, next) {
-    const task = await this.taskService.getTaskById(req.params.id);
-    if (!task || task.userId !== req.user.id) {
-      const error = new Error("Task not found");
-      error.statusCode = 404;
-      throw error;
-    }
-    res.json(toTaskDTO(task));
+    const task = await getTaskByIdHandler.execute({
+      taskId: req.params.id,
+      userId: req.user.id,
+    });
+    res.json(task);
   }
 
   async updateTask(req, res, next) {
-    const task = await this.taskService.updateTask(
-      req.params.id,
-      req.user.id,
-      req.body,
-    );
-    res.json(toTaskDTO(task));
+    const result = await updateTaskHandler.execute({
+      taskId: req.params.id,
+      userId: req.user.id,
+      updateData: req.body,
+    });
+    res.json(result);
   }
 
   async deleteTask(req, res, next) {
-    await this.taskService.deleteTask(req.params.id, req.user.id);
+    await deleteTaskHandler.execute({
+      taskId: req.params.id,
+      userId: req.user.id,
+    });
     res.status(204).send();
   }
 }
 
-module.exports = TaskController;
+module.exports = new TaskController();
