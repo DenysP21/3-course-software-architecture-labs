@@ -28,7 +28,7 @@ describe("User Service Unit Tests", () => {
     ).rejects.toThrow("User already exists");
   });
 
-  test("Should throw error if password is incorrect", async () => {
+  test("Should throw UserValidationError if password is incorrect", async () => {
     userRepository.findByEmail.mockResolvedValue({
       id: 1,
       email: "test@test.com",

@@ -1,6 +1,6 @@
 const express = require("express");
 const UserController = require("../controllers/userController");
-const UserService = require("../services/userService");
+const UserService = require("../../application/services/userService");
 const userRepository = require("../../infrastructure/repositories/userRepository");
 const authMiddleware = require("../middleware/auth");
 

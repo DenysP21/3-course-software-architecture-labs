@@ -32,7 +32,7 @@ class Task {
 
   updateTitle(newTitle) {
     if (!newTitle || newTitle.trim().length === 0) {
-      throw new ValidationError("Title cannot be empty");
+      throw new TaskValidationError("Title cannot be empty");
     }
     this.title = newTitle;
     this.updatedAt = new Date();

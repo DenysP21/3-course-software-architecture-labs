@@ -1,26 +1,14 @@
+const TaskFactory = require("../../domain/factories/TaskFactory");
+const { TaskValidationError } = require("../../domain/errors/taskErrors");
+
 class TaskService {
   constructor(taskRepository) {
     this.taskRepository = taskRepository;
   }
 
   async createTask(title, description, dueDate, userId) {
-    if (!title) {
-      throw new Error("Title is required");
-    }
-
-    if (dueDate) {
-      const dueDateObj = new Date(dueDate);
-      if (dueDateObj < new Date()) {
-        throw new Error("Due date cannot be in the past");
-      }
-    }
-
-    return await this.taskRepository.create({
-      title,
-      description,
-      dueDate,
-      userId,
-    });
+    const task = TaskFactory.create({ title, description, dueDate, userId });
+    return await this.taskRepository.create(task);
   }
 
   async getTasksByUserId(userId) {
@@ -35,24 +23,29 @@ class TaskService {
     const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
-      throw new Error("Task not found or access denied");
+      throw new TaskValidationError("Task not found or access denied");
     }
 
-    if (updateData.dueDate) {
-      const dueDateObj = new Date(updateData.dueDate);
-      if (dueDateObj < new Date()) {
-        throw new Error("Due date cannot be in the past");
-      }
+    if (updateData.title !== undefined) {
+      task.updateTitle(updateData.title);
     }
 
-    return await this.taskRepository.update(taskId, updateData);
+    if (updateData.description !== undefined) {
+      task.updateDescription(updateData.description);
+    }
+
+    if (updateData.dueDate !== undefined) {
+      task.updateDueDate(updateData.dueDate);
+    }
+
+    return await this.taskRepository.update(taskId, task);
   }
 
   async deleteTask(taskId, userId) {
     const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
-      throw new Error("Task not found or access denied");
+      throw new TaskValidationError("Task not found or access denied");
     }
 
     return await this.taskRepository.delete(taskId);

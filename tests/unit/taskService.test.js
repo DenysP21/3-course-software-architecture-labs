@@ -22,7 +22,7 @@ describe("Task Service Unit Tests", () => {
     ).rejects.toThrow("Title is required");
   });
 
-  test("Should throw error if due date is in the past on create", async () => {
+  test("Should throw InvalidTaskDateError if due date is in the past on create", async () => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 1);
     await expect(
@@ -45,7 +45,7 @@ describe("Task Service Unit Tests", () => {
     expect(result.length).toBe(2);
   });
 
-  test("Should throw error on update if task not found", async () => {
+  test("Should throw TaskValidationError on update if task not found", async () => {
     taskRepository.findById.mockResolvedValue(null);
     await expect(taskService.updateTask(1, 1, {})).rejects.toThrow(
       "Task not found or access denied",
@@ -75,6 +75,30 @@ describe("Task Service Unit Tests", () => {
     taskRepository.update.mockResolvedValue({ id: 1, title: "Updated" });
     const result = await taskService.updateTask(1, 1, { title: "Updated" });
     expect(result.title).toBe("Updated");
+  });
+
+  test("Should update task description successfully", async () => {
+    const mockTask = new Task({ id: 1, title: "Old", description: "Old desc", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
+    taskRepository.update.mockResolvedValue({ id: 1, description: "New desc" });
+
+    const result = await taskService.updateTask(1, 1, { description: "New desc" });
+    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    expect(mockTask.description).toBe("New desc");
+    expect(result.description).toBe("New desc");
+  });
+
+  test("Should update task due date successfully", async () => {
+    const mockTask = new Task({ id: 1, title: "Old", userId: 1 });
+    taskRepository.findById.mockResolvedValue(mockTask);
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 5);
+    taskRepository.update.mockResolvedValue({ id: 1, dueDate: futureDate });
+
+    const result = await taskService.updateTask(1, 1, { dueDate: futureDate });
+    expect(taskRepository.update).toHaveBeenCalledWith(1, mockTask);
+    expect(mockTask.dueDate).toEqual(futureDate);
+    expect(result.dueDate).toEqual(futureDate);
   });
 
   test("Should throw error on delete if access denied", async () => {
