@@ -1,4 +1,5 @@
-const { InvalidTaskDateError, TaskValidationError } = require("../../domain/errors/taskErrors");
+const TaskFactory = require("../../domain/factories/TaskFactory");
+const { TaskValidationError } = require("../../domain/errors/taskErrors");
 
 class TaskService {
   constructor(taskRepository) {
@@ -6,22 +7,13 @@ class TaskService {
   }
 
   async createTask(title, description, dueDate, userId) {
-    if (!title) {
-      throw new TaskValidationError("Title is required");
-    }
-
-    if (dueDate) {
-      const dueDateObj = new Date(dueDate);
-      if (dueDateObj < new Date()) {
-        throw new InvalidTaskDateError("Due date cannot be in the past");
-      }
-    }
-
+    const taskObject = TaskFactory.create({ title, description, dueDate, userId });
+    
     return await this.taskRepository.create({
-      title,
-      description,
-      dueDate,
-      userId,
+      title: taskObject.title,
+      description: taskObject.description,
+      dueDate: taskObject.dueDate,
+      userId: taskObject.userId,
     });
   }
 
@@ -41,10 +33,12 @@ class TaskService {
     }
 
     if (updateData.dueDate) {
-      const dueDateObj = new Date(updateData.dueDate);
-      if (dueDateObj < new Date()) {
-        throw new InvalidTaskDateError("Due date cannot be in the past");
-      }
+      TaskFactory.create({ 
+        title: task.title, 
+        description: task.description, 
+        dueDate: updateData.dueDate, 
+        userId: task.userId 
+      });
     }
 
     return await this.taskRepository.update(taskId, updateData);

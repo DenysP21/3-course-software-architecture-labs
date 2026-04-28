@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { UserExistsError, UserValidationError } = require("../../domain/errors/userErrors");
+const UserFactory = require("../../domain/factories/UserFactory");
+const { UserValidationError } = require("../../domain/errors/userErrors");
 
 class UserService {
   constructor(userRepository) {
@@ -15,12 +16,9 @@ class UserService {
       throw new UserValidationError("Password must be at least 6 characters");
     }
 
-    const existing = await this.userRepository.findByEmail(email);
-    if (existing) {
-      throw new UserExistsError("User already exists");
-    }
-
     const passwordHash = await bcrypt.hash(password, 10);
+    const userObject = await UserFactory.create({ email, passwordHash }, this.userRepository);
+    
     return await this.userRepository.create({ email, passwordHash });
   }
 
