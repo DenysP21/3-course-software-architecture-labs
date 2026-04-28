@@ -7,14 +7,8 @@ class TaskService {
   }
 
   async createTask(title, description, dueDate, userId) {
-    const taskObject = TaskFactory.create({ title, description, dueDate, userId });
-    
-    return await this.taskRepository.create({
-      title: taskObject.title,
-      description: taskObject.description,
-      dueDate: taskObject.dueDate,
-      userId: taskObject.userId,
-    });
+    const task = TaskFactory.create({ title, description, dueDate, userId });
+    return await this.taskRepository.create(task);
   }
 
   async getTasksByUserId(userId) {
@@ -32,16 +26,14 @@ class TaskService {
       throw new TaskValidationError("Task not found or access denied");
     }
 
-    if (updateData.dueDate) {
-      TaskFactory.create({ 
-        title: task.title, 
-        description: task.description, 
-        dueDate: updateData.dueDate, 
-        userId: task.userId 
-      });
-    }
+    const updatedTask = TaskFactory.create({ 
+      title: updateData.title || task.title, 
+      description: updateData.description || task.description, 
+      dueDate: updateData.dueDate || task.dueDate, 
+      userId: task.userId 
+    });
 
-    return await this.taskRepository.update(taskId, updateData);
+    return await this.taskRepository.update(taskId, updatedTask);
   }
 
   async deleteTask(taskId, userId) {
