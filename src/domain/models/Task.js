@@ -36,6 +36,24 @@ class Task {
     this.title = newTitle;
     this.updatedAt = new Date();
   }
+
+  updateDescription(newDescription) {
+    this.description = newDescription || "";
+    this.updatedAt = new Date();
+  }
+
+  updateDueDate(newDueDate) {
+    if (newDueDate) {
+      const parsedDate = new Date(newDueDate);
+      if (parsedDate < new Date()) {
+        throw new DomainError("Due date cannot be in the past");
+      }
+      this.dueDate = parsedDate;
+    } else {
+      this.dueDate = null;
+    }
+    this.updatedAt = new Date();
+  }
 }
 
 module.exports = Task;
