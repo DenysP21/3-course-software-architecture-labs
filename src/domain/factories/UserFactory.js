@@ -1,22 +1,15 @@
 const User = require("../models/User");
-const { ValidationError, UserExistsError } = require("../errors/userErrors");
+const { UserValidationError } = require("../errors/userErrors");
 
 class UserFactory {
-  static async create({ email, passwordHash }, userRepository) {
+  static create({ email, passwordHash }) {
     if (!email || !passwordHash) {
-      throw new ValidationError("Email and password hash are required");
+      throw new UserValidationError("Email and password hash are required");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new ValidationError("Invalid email format");
-    }
-
-    if (userRepository) {
-      const existingUser = await userRepository.findByEmail(email);
-      if (existingUser) {
-        throw new UserExistsError(`User with email ${email} already exists`);
-      }
+      throw new UserValidationError("Invalid email format");
     }
 
     return new User({
