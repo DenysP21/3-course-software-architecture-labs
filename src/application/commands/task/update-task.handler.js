@@ -1,12 +1,14 @@
 const { TaskValidationError } = require("../../../domain/errors/taskErrors");
+const TaskCompletedEvent = require('../../../domain/events/TaskCompletedEvent');
 
 class UpdateTaskHandler {
-  constructor(taskRepository) {
+  constructor(taskRepository, eventBus) {
     this.taskRepository = taskRepository;
+    this.eventBus = eventBus;
   }
 
   async handle(command) {
-    const { taskId, userId, updateData } = command;
+    const { taskId, userId, updateData, userEmail } = command;
     const task = await this.taskRepository.findById(taskId);
 
     if (!task || task.userId !== userId) {
@@ -29,7 +31,18 @@ class UpdateTaskHandler {
       task.markAsCompleted();
     }
 
-    return await this.taskRepository.update(task);
+    const updatedTask = await this.taskRepository.update(task);
+
+    if (this.eventBus && updateData.status === "COMPLETED") {
+      const event = new TaskCompletedEvent({
+        taskId: task.id || taskId,
+        userId: task.userId,
+        userEmail: userEmail
+      });
+      this.eventBus.publish(event);
+    }
+
+    return updatedTask;
   }
 }
 
