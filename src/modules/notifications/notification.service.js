@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 class NotificationService {
   constructor() {
@@ -10,6 +10,9 @@ class NotificationService {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
   }
 
@@ -18,16 +21,16 @@ class NotificationService {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Welcome to Task Manager!',
-        text: 'Thank you for registering. Welcome aboard!',
-        html: '<h1>Welcome!</h1><p>Thank you for registering with Task Manager.</p>',
+        subject: "Welcome to Task Manager!",
+        text: "Thank you for registering. Welcome aboard!",
+        html: "<h1>Welcome!</h1><p>Thank you for registering with Task Manager.</p>",
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Welcome email sent: %s', info.messageId);
+      console.log("Welcome email sent: %s", info.messageId);
       return true;
     } catch (error) {
-      console.error('Error sending welcome email:', error);
+      console.error("Error sending welcome email:", error);
       throw error;
     }
   }
@@ -44,12 +47,12 @@ class NotificationService {
         };
 
         const info = await this.transporter.sendMail(mailOptions);
-        console.log('Task notification email sent: %s', info.messageId);
+        console.log("Task notification email sent: %s", info.messageId);
       });
 
       return true;
     } catch (error) {
-      console.error('Error queuing task notification:', error);
+      console.error("Error queuing task notification:", error);
       throw error;
     }
   }
