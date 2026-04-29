@@ -14,10 +14,9 @@ const router = express.Router();
 
 const createHandler = new CreateTaskHandler(taskRepository, eventBus);
 const updateHandler = new UpdateTaskHandler(taskRepository, eventBus);
-
 const deleteHandler = new DeleteTaskHandler(taskRepository);
-const getTasksQuery = new GetTasksHandler(taskRepository);
-const getTaskByIdQuery = new GetTaskByIdHandler(taskRepository);
+const getTasksQuery = new GetTasksHandler();
+const getTaskByIdQuery = new GetTaskByIdHandler();
 
 const taskController = new TaskController(
   createHandler,
