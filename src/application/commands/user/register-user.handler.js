@@ -4,6 +4,7 @@ const {
   UserValidationError,
   UserExistsError,
 } = require("../../../domain/errors/userErrors");
+const NotificationService = require("../../../modules/notifications/notification.service");
 
 class RegisterUserCommand {
   constructor(email, password) {
@@ -15,6 +16,7 @@ class RegisterUserCommand {
 class RegisterUserHandler {
   constructor(repo) {
     this.userRepository = repo;
+    this.notificationService = new NotificationService();
   }
 
   async handle(command) {
@@ -36,7 +38,14 @@ class RegisterUserHandler {
       this.userRepository,
     );
 
-    return await this.userRepository.create(user);
+    const createdUser = await this.userRepository.create(user);
+    try {
+      await this.notificationService.sendWelcomeEmail(command.email);
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+    }
+
+    return createdUser;
   }
 }
 
