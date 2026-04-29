@@ -7,8 +7,7 @@ const eventBus = require("../../infrastructure/events/eventBus");
 
 const router = express.Router();
 
-const taskService = new TaskService(taskRepository, eventBus);
-const taskController = new TaskController(taskService);
+const taskController = new TaskController(taskRepository, eventBus);
 
 router.post("/", authMiddleware, taskController.createTask);
 router.get("/", authMiddleware, taskController.getTasks);
