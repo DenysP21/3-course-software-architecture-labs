@@ -5,6 +5,8 @@ const userRoutes = require("./presentation/routes/userRoutes");
 const taskRoutes = require("./presentation/routes/taskRoutes");
 const errorHandler = require("./presentation/middleware/errorHandler");
 
+require("./modules/notifications/notification.subscriber");
+
 app.use(cors());
 app.use(express.json());
 
