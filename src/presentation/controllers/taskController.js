@@ -21,7 +21,11 @@ class TaskController {
 
   async createTask(req, res, next) {
     try {
-      const command = { ...req.body, userId: req.user.id };
+      const command = {
+        ...req.body,
+        userId: req.user.id,
+        userEmail: req.user.email,
+      };
       const result = await this.createHandler.handle(command);
       res.status(201).json(result);
     } catch (error) {
@@ -34,6 +38,7 @@ class TaskController {
       const command = {
         taskId: req.params.id,
         userId: req.user.id,
+        userEmail: req.user.email,
         updateData: req.body,
       };
       const result = await this.updateHandler.handle(command);
