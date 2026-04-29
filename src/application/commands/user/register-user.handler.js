@@ -39,8 +39,11 @@ class RegisterUserHandler {
     );
 
     const createdUser = await this.userRepository.create(user);
-
-    await this.notificationService.sendWelcomeEmail(command.email);
+    try {
+      await this.notificationService.sendWelcomeEmail(command.email);
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+    }
 
     return createdUser;
   }
