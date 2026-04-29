@@ -11,9 +11,9 @@ const GetTasksHandler = require("../../application/queries/task/get-tasks.handle
 const GetTaskByIdHandler = require("../../application/queries/task/get-task-by-id.handler");
 
 const router = express.Router();
-
 const createHandler = new CreateTaskHandler(taskRepository, eventBus);
 const updateHandler = new UpdateTaskHandler(taskRepository, eventBus);
+
 const deleteHandler = new DeleteTaskHandler(taskRepository);
 const getTasksQuery = new GetTasksHandler();
 const getTaskByIdQuery = new GetTaskByIdHandler();
